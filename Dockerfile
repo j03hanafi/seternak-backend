@@ -23,4 +23,4 @@ WORKDIR /root/
 COPY --from=builder /go/src/app/run .
 
 EXPOSE 8080
-CMD ["./run"]
+CMD ["sh", "-c", "./run"]
