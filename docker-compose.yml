@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  seternak-backend:
+    build:
+      context: ./
+      target: builder
+    image: seternak-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./.env
+    environment:
+      - TZ=Asia/Jakarta
+    volumes:
+      - ./:/go/src/app
+    # have to use $$ (double-dollar) so docker doesn't try to substitute a variable
+    command: reflex -v -r "\.go$$" -s -- sh -c "go run ./"
