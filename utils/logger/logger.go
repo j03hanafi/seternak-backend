@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"github.com/j03hanafi/seternak-backend/utils/consts"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -32,7 +33,7 @@ func Get() *zap.Logger {
 
 		// File Log
 		filename := "logs/app.log"
-		if viper.GetString("APP_ENV") == "test" {
+		if viper.GetString("APP_ENV") == consts.TestMode {
 			filename = "../logs/app.log"
 		}
 		file := zapcore.AddSync(&lumberjack.Logger{
@@ -69,7 +70,7 @@ func Get() *zap.Logger {
 			opts  []zap.Option
 		)
 
-		if viper.GetString("APP_ENV") != "production" {
+		if viper.GetString("APP_ENV") != consts.ProductionMode {
 			level = zap.NewAtomicLevelAt(zap.DebugLevel)
 			opts = append(opts, zap.Development(), zap.AddCaller(), zap.AddStacktrace(zap.WarnLevel))
 			core = zapcore.NewCore(consoleEncoder, stdout, level)

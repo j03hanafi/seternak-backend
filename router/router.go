@@ -4,9 +4,9 @@ import (
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/j03hanafi/seternak-backend/application/handler"
 	configuration "github.com/j03hanafi/seternak-backend/config"
-	"github.com/j03hanafi/seternak-backend/controller"
-	"github.com/j03hanafi/seternak-backend/logger"
+	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -25,10 +25,10 @@ func New() *fiber.App {
 	app.Use(fiberzap.New(*config.GetFiberzapConfig()))
 	app.Use(recover.New(*config.GetRecoverConfig()))
 
-	newHandler(&handlerConfig{
+	newAPI(&apiConfig{
 		app:     app,
 		baseURL: viper.GetString("API_URL"),
-		version: controller.NewVersion(),
+		version: handler.NewVersion(),
 	})
 
 	return app

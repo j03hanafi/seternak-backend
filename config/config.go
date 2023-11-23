@@ -2,13 +2,20 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/j03hanafi/seternak-backend/logger"
+	"github.com/j03hanafi/seternak-backend/domain"
+	"github.com/j03hanafi/seternak-backend/utils/apperrors"
+	"github.com/j03hanafi/seternak-backend/utils/consts"
+	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"github.com/spf13/viper"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
+	"moul.io/zapgorm2"
 )
 
 // Config defines configuration settings for the server.
@@ -16,6 +23,7 @@ type Config struct {
 	fiber    *fiber.Config
 	fiberzap *fiberzap.Config
 	recover  *recover.Config
+	db       *gorm.DB
 }
 
 // New initializes a new Config struct, sets default values, and loads environment variables.
@@ -43,6 +51,7 @@ func New() *Config {
 	config.setFiberConfig()
 	config.setFiberzapConfig()
 	config.setRecoverConfig()
+	config.setDB()
 
 	return config
 }
@@ -50,8 +59,17 @@ func New() *Config {
 // setDefaults sets default values for application configuration.
 func (c *Config) setDefaults() {
 	// Set default App configuration
-	viper.SetDefault("APP_ENV", "development")
+	viper.SetDefault("APP_ENV", consts.DevelopmentMode)
 	viper.SetDefault("API_URL", "/api/v1")
+
+	// Set default DB configuration
+	viper.SetDefault("PG_HOST", "localhost")
+	viper.SetDefault("PG_PORT", "5432")
+	viper.SetDefault("PG_USER", "postgres")
+	viper.SetDefault("PG_PASS", "password")
+	viper.SetDefault("PG_DB", "seternak")
+	viper.SetDefault("PG_SSL", "disable")
+
 }
 
 // setFiberConfig initializes Fiber's configuration with custom settings.
@@ -63,6 +81,7 @@ func (c *Config) setFiberConfig() {
 		JSONEncoder:              json.Marshal,
 		JSONDecoder:              json.Unmarshal,
 		ErrorHandler:             c.fiberErrorHandler,
+		StrictRouting:            true,
 	}
 }
 
@@ -102,20 +121,53 @@ func (c *Config) GetRecoverConfig() *recover.Config {
 }
 
 func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
-	// Status code defaults to 500
-	code := fiber.StatusInternalServerError
 
-	// Retrieve the custom status code if it's a *fiber.Error
-	var e *fiber.Error
-	if errors.As(err, &e) {
-		code = e.Code
+	// Check for errors code
+	var appErrors *apperrors.Error
+	switch apperrors.Status(err) {
+	case fiber.StatusNotFound:
+		appErrors = apperrors.NewNotFound(err)
+	default:
+		appErrors = apperrors.NewInternal(err)
 	}
 
-	// Set Content-Type: text/plain; charset=utf-8
-	ctx.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
-
 	// Return status code with error message
-	return ctx.Status(code).JSON(fiber.Map{
-		"error": err.Error(),
+	return ctx.Status(appErrors.Status()).JSON(domain.CustomResponse{
+		HTTPStatusCode: appErrors.Status(),
+		ResponseData:   appErrors,
 	})
+}
+
+func (c *Config) setDB() {
+	var (
+		pgHost = viper.GetString("PG_HOST")
+		pgPort = viper.GetString("PG_PORT")
+		pgUser = viper.GetString("PG_USER")
+		pgPass = viper.GetString("PG_PASS")
+		pgDB   = viper.GetString("PG_DB")
+		pgSSL  = viper.GetString("PG_SSL")
+	)
+
+	loggerDB := zapgorm2.New(logger.Get())
+	loggerDB.SetAsDefault()
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", pgHost, pgPort, pgUser, pgPass, pgDB, pgSSL)
+	gormPrepared, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		SkipDefaultTransaction: true,
+		PrepareStmt:            true,
+		Logger:                 loggerDB,
+	})
+	if err != nil {
+		log.Fatalf("Error initializing DB, %v", err)
+	}
+
+	if viper.GetString("APP_ENV") != consts.ProductionMode {
+		gormPrepared = gormPrepared.Debug()
+	}
+
+	c.db = gormPrepared
+}
+
+func (c *Config) GetDB() *gorm.DB {
+	return c.db
 }

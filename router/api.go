@@ -2,26 +2,25 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/j03hanafi/seternak-backend/controller"
+	"github.com/j03hanafi/seternak-backend/application/handler"
 )
 
-// Handler struct holds required services for handler to function
-type handler struct {
-	versionController *controller.Version
+// api struct holds required handlers for api to function
+type api struct {
+	versionController *handler.Version
 }
 
-// Config will hold services that will eventually be injected into this
-// handler layer on handler initialization
-type handlerConfig struct {
+// apiConfig will hold handlers that will eventually be injected into this
+// api layer on api initialization
+type apiConfig struct {
 	app     *fiber.App
 	baseURL string
-	version *controller.Version
+	version *handler.Version
 }
 
-// NewHandler initializes the handler with required injected services along with http routes
-// Does not return as it deals directly with a reference to the gin Engine
-func newHandler(c *handlerConfig) {
-	h := &handler{
+// newAPI initializes the api with required injected handlers along with http routes
+func newAPI(c *apiConfig) {
+	h := &api{
 		versionController: c.version,
 	}
 

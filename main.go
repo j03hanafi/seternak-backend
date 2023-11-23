@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"github.com/j03hanafi/seternak-backend/logger"
 	"github.com/j03hanafi/seternak-backend/router"
+	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"go.uber.org/zap"
 	"log"
 	"os/signal"
