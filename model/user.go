@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// User defines the schema for the users table in the database.
 type User struct {
 	UID       string
 	Email     string

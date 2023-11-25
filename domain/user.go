@@ -5,13 +5,19 @@ import (
 	"github.com/google/uuid"
 )
 
+// User defines domain model and its json representation
 type User struct {
-	UID      uuid.UUID `json:"uid" db:"uid"`
-	Email    string    `json:"email" db:"email"`
-	Password string    `json:"-" db:"password"`
-	Name     string    `json:"name" db:"name"`
+	UID      uuid.UUID `json:"uid"`
+	Email    string    `json:"email"`
+	Password string    `json:"-"`
+	Name     string    `json:"name"`
 }
 
+// UserRepository defines methods the service layer expects
+// any repository it interacts with to implement
 type UserRepository interface {
+
+	// Create inserts a new User record into the database.
+	// Returns an error if the user creation process fails.
 	Create(ctx context.Context, u *User) error
 }

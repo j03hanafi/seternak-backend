@@ -20,10 +20,10 @@ import (
 
 // Config defines configuration settings for the server.
 type Config struct {
+	db       *gorm.DB
 	fiber    *fiber.Config
 	fiberzap *fiberzap.Config
 	recover  *recover.Config
-	db       *gorm.DB
 }
 
 // New initializes a new Config struct, sets default values, and loads environment variables.
@@ -36,7 +36,8 @@ func New() *Config {
 	viper.SetConfigName(".env")
 	viper.SetConfigType("dotenv")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("../.") // For testing _test.go files
+	viper.AddConfigPath("../.")    // For testing _test.go files
+	viper.AddConfigPath("../../.") // For testing _test.go files in application directory
 	viper.AllowEmptyEnv(false)
 	viper.AutomaticEnv()
 
@@ -48,10 +49,10 @@ func New() *Config {
 	}
 
 	// Set Config struct field values
+	config.setDB()
 	config.setFiberConfig()
 	config.setFiberzapConfig()
 	config.setRecoverConfig()
-	config.setDB()
 
 	return config
 }
@@ -120,6 +121,8 @@ func (c *Config) GetRecoverConfig() *recover.Config {
 	return c.recover
 }
 
+// fiberErrorHandler manages error handling in the Fiber application context.
+// Returns a JSON response with the appropriate status code and error message.
 func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 
 	// Check for errors code
@@ -138,6 +141,8 @@ func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 	})
 }
 
+// setDB initializes and configures the database connection using GORM with PostgreSQL.
+// It logs a fatal error and exits if the database initialization fails.
 func (c *Config) setDB() {
 	var (
 		pgHost = viper.GetString("PG_HOST")
@@ -168,6 +173,8 @@ func (c *Config) setDB() {
 	c.db = gormPrepared
 }
 
+// GetDB retrieves the GORM database instance from the Config struct.
+// Returns a pointer to the gorm.DB instance.
 func (c *Config) GetDB() *gorm.DB {
 	return c.db
 }
