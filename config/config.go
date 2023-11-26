@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/handler/response"
-	"github.com/j03hanafi/seternak-backend/utils/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils/consts"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"github.com/spf13/viper"
@@ -130,6 +130,8 @@ func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 	// Check for errors code
 	var appErrors *apperrors.Error
 	switch apperrors.Status(err) {
+	case fiber.StatusConflict:
+		appErrors = apperrors.NewConflict(err)
 	case fiber.StatusNotFound:
 		appErrors = apperrors.NewNotFound(err)
 	default:

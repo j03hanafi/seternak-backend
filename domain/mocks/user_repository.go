@@ -20,3 +20,20 @@ func (m *MockUserRepository) Create(ctx context.Context, u *domain.User) error {
 
 	return r0
 }
+
+func (m *MockUserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	args := m.Called(ctx, email)
+
+	var r0 *domain.User
+	if args.Get(0) != nil {
+		r0 = args.Get(0).(*domain.User)
+	}
+
+	var r1 error
+	if args.Get(1) != nil {
+		r1 = args.Error(1)
+	}
+
+	return r0, r1
+
+}

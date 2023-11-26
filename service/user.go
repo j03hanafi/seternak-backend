@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"github.com/j03hanafi/seternak-backend/domain"
+	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils"
-	"github.com/j03hanafi/seternak-backend/utils/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"go.uber.org/zap"
 )
@@ -53,4 +53,22 @@ func (u *userService) SignUp(ctx context.Context, user *domain.User) error {
 	}
 
 	return nil
+}
+
+func (u *userService) SignIn(ctx context.Context, user *domain.User) error {
+	l := logger.FromCtx(ctx)
+
+	userFetch, err := u.UserRepository.FindByEmail(ctx, user.Email)
+	if err != nil {
+		l.Error("error fetching user",
+			zap.Error(err),
+			zap.Any("user", user),
+		)
+		return apperrors.NewAuthorization(err, err.Error())
+	}
+
+	*user = *userFetch
+
+	return nil
+
 }

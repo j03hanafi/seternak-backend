@@ -20,3 +20,17 @@ func (s SignUp) Validate() error {
 		validation.Field(&s.Name, validation.Required, validation.Length(1, 255)),
 	)
 }
+
+// SignIn defines the request payload for SignIn method.
+type SignIn struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// Validate validates the SignIn request fields.
+func (s SignIn) Validate() error {
+	return validation.ValidateStruct(&s,
+		validation.Field(&s.Email, validation.Required, is.Email),
+		validation.Field(&s.Password, validation.Required, validation.Length(8, 255)),
+	)
+}

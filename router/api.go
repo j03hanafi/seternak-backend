@@ -33,4 +33,5 @@ func newAPI(c *apiConfig) {
 	g.Get("", h.versionHandler.GetVersion)
 
 	g.Post("/signup", h.userHandler.SignUp)
+	g.Post("/signin", h.userHandler.SignIn)
 }

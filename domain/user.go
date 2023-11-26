@@ -20,6 +20,8 @@ type UserService interface {
 	// SignUp registers a new user into the system.
 	// Returns an error if the user registration process fails.
 	SignUp(ctx context.Context, u *User) error
+
+	SignIn(ctx context.Context, u *User) error
 }
 
 // UserRepository defines methods the service layer expects
@@ -29,4 +31,8 @@ type UserRepository interface {
 	// Create inserts a new User record into the database.
 	// Returns an error if the user creation process fails.
 	Create(ctx context.Context, u *User) error
+
+	// FindByEmail retrieves a user by their email address from the database.
+	// Returns a User object or an error if the user is not found.
+	FindByEmail(ctx context.Context, email string) (*User, error)
 }

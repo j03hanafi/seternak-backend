@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/config"
 	"github.com/j03hanafi/seternak-backend/domain"
-	"github.com/j03hanafi/seternak-backend/utils/apperrors"
+	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils/consts"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"github.com/spf13/viper"
@@ -49,7 +49,7 @@ func TestPgUserRepository_Create(t *testing.T) {
 		err := r.Create(ctx, u)
 		assert.Error(t, err)
 
-		assert.EqualError(t, err, apperrors.NewConflict("email", u.Email, err).Error())
+		assert.EqualError(t, err, apperrors.NewConflict(err).Error())
 	})
 }
 

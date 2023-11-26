@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/j03hanafi/seternak-backend/domain"
+	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/repository/model"
-	"github.com/j03hanafi/seternak-backend/utils/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
@@ -40,10 +40,29 @@ func (p *pgUserRepository) Create(ctx context.Context, u *domain.User) error {
 		// Check if the error is a duplicate email error
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return apperrors.NewConflict("email", u.Email, err)
+			return apperrors.NewConflict(err, map[string]any{"email": u.Email})
 		}
 
 		return apperrors.NewInternal(err)
 	}
 	return nil
+}
+
+func (p *pgUserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	l := logger.FromCtx(ctx)
+
+	user := new(model.User)
+
+	err := p.db.WithContext(ctx).Where("email = ?", email).First(user).Error
+	if err != nil {
+		l.Error("Could not find a user", zap.Error(err), zap.String("email", email))
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperrors.NewNotFound(err, map[string]any{"email": email})
+		}
+
+		return nil, apperrors.NewInternal(err)
+	}
+
+	return user.ToUser(), nil
+
 }

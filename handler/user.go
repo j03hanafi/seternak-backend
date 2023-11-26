@@ -3,9 +3,9 @@ package handler
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/j03hanafi/seternak-backend/domain"
+	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/handler/request"
 	"github.com/j03hanafi/seternak-backend/handler/response"
-	"github.com/j03hanafi/seternak-backend/utils/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"go.uber.org/zap"
 )
@@ -77,4 +77,53 @@ func (u *User) SignUp(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(response.CustomResponse{
 		HTTPStatusCode: fiber.StatusCreated,
 	})
+}
+
+func (u *User) SignIn(c *fiber.Ctx) error {
+	ctx := c.UserContext()
+	l := logger.Get()
+	ctx = logger.WithCtx(ctx, l)
+
+	// bind request body to SignIn struct
+	req := new(request.SignIn)
+	if err := c.BodyParser(req); err != nil {
+		l.Error("error binding data",
+			zap.Error(err),
+		)
+		return apperrors.NewInternal(err)
+	}
+
+	// validate request body
+	if err := req.Validate(); err != nil {
+		l.Error("error validating data",
+			zap.Error(err),
+		)
+		return apperrors.NewInternal(err)
+	}
+
+	// create user domain object
+	user := &domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	// sign in user
+	if err := u.userService.SignIn(ctx, user); err != nil {
+		l.Info("Unable to sign in user",
+			zap.Error(err),
+		)
+		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
+			HTTPStatusCode: apperrors.Status(err),
+			ResponseData:   err,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.CustomResponse{
+		HTTPStatusCode: fiber.StatusOK,
+		ResponseData: fiber.Map{
+			"email": user.Email,
+			"name":  user.Name,
+		},
+	})
+
 }
