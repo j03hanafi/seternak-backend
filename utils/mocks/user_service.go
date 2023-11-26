@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type MockUserRepository struct {
+type MockUserService struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) Create(ctx context.Context, u *domain.User) error {
+func (m *MockUserService) SignUp(ctx context.Context, u *domain.User) error {
 	args := m.Called(ctx, u)
 
 	var r0 error

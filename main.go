@@ -13,6 +13,8 @@ import (
 
 func main() {
 	var err error
+
+	// Initialize logger
 	l := logger.Get()
 	defer func(l *zap.Logger) {
 		_ = l.Sync()
@@ -22,16 +24,16 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
 	defer stop()
 
+	// Initialize Fiber app
 	app := router.New()
-
 	go func() {
 		if err = app.Listen(":8080"); err != nil {
 			log.Fatal("Server Error", err)
 		}
 	}()
-
 	l.Info("Server is starting...")
 
+	// Graceful Shutdown
 	<-ctx.Done()
 	stop()
 	l.Info("shutting down gracefully, press Ctrl+C again to force")
@@ -40,6 +42,5 @@ func main() {
 	if err != nil {
 		l.Fatal("Server forced to shutdown", zap.Error(err))
 	}
-
 	l.Info("Server was successful shutdown.")
 }

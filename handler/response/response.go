@@ -1,4 +1,4 @@
-package domain
+package response
 
 // CustomResponse struct defines the structure for custom API responses.
 // It includes the HTTP status code and a flexible data field for response content.

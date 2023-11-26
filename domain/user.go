@@ -13,6 +13,15 @@ type User struct {
 	Name     string    `json:"name"`
 }
 
+// UserService defines methods the handler layer expects
+// any service it interacts with to implement
+type UserService interface {
+
+	// SignUp registers a new user into the system.
+	// Returns an error if the user registration process fails.
+	SignUp(ctx context.Context, u *User) error
+}
+
 // UserRepository defines methods the service layer expects
 // any repository it interacts with to implement
 type UserRepository interface {

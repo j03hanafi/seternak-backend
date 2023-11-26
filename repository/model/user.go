@@ -17,6 +17,7 @@ type User struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+// FromUser converts the domain.User struct to a User model.
 func (u *User) FromUser(user *domain.User) {
 	u.UID = user.UID.String()
 	u.Email = user.Email

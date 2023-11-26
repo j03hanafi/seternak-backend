@@ -7,15 +7,17 @@ import (
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/j03hanafi/seternak-backend/domain"
+	"github.com/j03hanafi/seternak-backend/handler/response"
 	"github.com/j03hanafi/seternak-backend/utils/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils/consts"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 	"log"
 	"moul.io/zapgorm2"
+	"time"
 )
 
 // Config defines configuration settings for the server.
@@ -135,7 +137,7 @@ func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 	}
 
 	// Return status code with error message
-	return ctx.Status(appErrors.Status()).JSON(domain.CustomResponse{
+	return ctx.Status(appErrors.Status()).JSON(response.CustomResponse{
 		HTTPStatusCode: appErrors.Status(),
 		ResponseData:   appErrors,
 	})
@@ -164,6 +166,18 @@ func (c *Config) setDB() {
 	})
 	if err != nil {
 		log.Fatalf("Error initializing DB, %v", err)
+	}
+
+	// Register db resolver
+	err = gormPrepared.Use(
+		dbresolver.Register(dbresolver.Config{}).
+			SetConnMaxIdleTime(time.Hour).
+			SetConnMaxLifetime(24 * time.Hour).
+			SetMaxIdleConns(100).
+			SetMaxOpenConns(200),
+	)
+	if err != nil {
+		log.Fatalf("Error setting up db resolver, %v", err)
 	}
 
 	if viper.GetString("APP_ENV") != consts.ProductionMode {

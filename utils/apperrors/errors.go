@@ -18,12 +18,14 @@ const (
 	NotFound Type = "E002" // For not finding resource
 )
 
+// Error is the standard error interface
 type Error struct {
 	Type    Type   `json:"code"`
 	Message string `json:"message"`
 	Data    any    `json:"error,omitempty"`
 }
 
+// newError is a helper function to create a new Error
 func newError(e *Error) *Error {
 	if viper.GetString("APP_ENV") == consts.ProductionMode {
 		e.Data = nil
@@ -61,7 +63,9 @@ func Status(err error) int {
 	return http.StatusInternalServerError
 }
 
-// Error "Factories"
+/*
+	Error "Factories"
+*/
 
 func NewInternal(err error) *Error {
 	return newError(&Error{
