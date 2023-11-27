@@ -1,31 +1,39 @@
 package config
 
 import (
+	"context"
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/handler/response"
 	"github.com/j03hanafi/seternak-backend/utils/consts"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/plugin/dbresolver"
 	"log"
 	"moul.io/zapgorm2"
+	"os"
 	"time"
 )
 
 // Config defines configuration settings for the server.
 type Config struct {
-	db       *gorm.DB
-	fiber    *fiber.Config
-	fiberzap *fiberzap.Config
-	recover  *recover.Config
+	db          *gorm.DB
+	fiber       *fiber.Config
+	fiberzap    *fiberzap.Config
+	recover     *recover.Config
+	redisClient *redis.Client
+	privateKey  *rsa.PrivateKey
 }
 
 // New initializes a new Config struct, sets default values, and loads environment variables.
@@ -55,6 +63,8 @@ func New() *Config {
 	config.setFiberConfig()
 	config.setFiberzapConfig()
 	config.setRecoverConfig()
+	config.setRedis()
+	config.setRSAKeys()
 
 	return config
 }
@@ -72,6 +82,16 @@ func (c *Config) setDefaults() {
 	viper.SetDefault("PG_PASS", "password")
 	viper.SetDefault("PG_DB", "seternak")
 	viper.SetDefault("PG_SSL", "disable")
+
+	// Set default Redis configuration
+	viper.SetDefault("REDIS_HOST", "localhost")
+	viper.SetDefault("REDIS_PORT", "6379")
+
+	// Set default Auth configuration
+	viper.SetDefault("REFRESH_TOKEN_SECRET", "refresh_token_secret")
+	viper.SetDefault("PRIVATE_KEY_FILE", "./rsa_private.pem")
+	viper.SetDefault("ID_TOKEN_EXP", "900")         // 15 minutes
+	viper.SetDefault("REFRESH_TOKEN_EXP", "259200") // 3 days
 
 }
 
@@ -134,6 +154,8 @@ func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 		appErrors = apperrors.NewConflict(err)
 	case fiber.StatusNotFound:
 		appErrors = apperrors.NewNotFound(err)
+	case fiber.StatusUnauthorized:
+		appErrors = apperrors.NewAuthorization(err)
 	default:
 		appErrors = apperrors.NewInternal(err)
 	}
@@ -149,6 +171,7 @@ func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 // It logs a fatal error and exits if the database initialization fails.
 func (c *Config) setDB() {
 	var (
+		l      = logger.Get()
 		pgHost = viper.GetString("PG_HOST")
 		pgPort = viper.GetString("PG_PORT")
 		pgUser = viper.GetString("PG_USER")
@@ -157,9 +180,10 @@ func (c *Config) setDB() {
 		pgSSL  = viper.GetString("PG_SSL")
 	)
 
-	loggerDB := zapgorm2.New(logger.Get())
+	loggerDB := zapgorm2.New(l)
 	loggerDB.SetAsDefault()
 
+	l.Info("Connecting to Postgres...")
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", pgHost, pgPort, pgUser, pgPass, pgDB, pgSSL)
 	gormPrepared, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		SkipDefaultTransaction: true,
@@ -193,4 +217,77 @@ func (c *Config) setDB() {
 // Returns a pointer to the gorm.DB instance.
 func (c *Config) GetDB() *gorm.DB {
 	return c.db
+}
+
+// setRedis initializes and configures the Redis connection.
+// It logs a fatal error and exits if the Redis initialization fails.
+func (c *Config) setRedis() {
+	var (
+		l         = logger.Get()
+		redisHost = viper.GetString("REDIS_HOST")
+		redisPort = viper.GetString("REDIS_PORT")
+	)
+
+	l.Info("Connecting to Redis...")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
+		Password: "",
+		DB:       0,
+	})
+
+	_, err := redisClient.Ping(context.Background()).Result()
+	if err != nil {
+		l.Fatal("Error initializing Redis", zap.Error(err))
+	}
+
+	c.redisClient = redisClient
+}
+
+// GetRedis retrieves the Redis client instance from the Config struct.
+// Returns a pointer to the redis.Client instance.
+func (c *Config) GetRedis() *redis.Client {
+	return c.redisClient
+}
+
+// setRSAKeys initializes and sets the RSA keys for JWT signing and verification.
+// It logs a fatal error and exits if the RSA key initialization fails.
+func (c *Config) setRSAKeys() {
+	l := logger.Get()
+
+	privateKeyFile, err := os.ReadFile(viper.GetString("PRIVATE_KEY_FILE"))
+	if err != nil {
+		l.Fatal("Error reading private key file", zap.Error(err))
+		return
+	}
+
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyFile)
+	if err != nil {
+		l.Fatal("Error parsing private key", zap.Error(err))
+	}
+
+	c.privateKey = privateKey
+}
+
+// GetPrivateKey retrieves the RSA private key from the Config struct.
+// Returns a pointer to the rsa.PrivateKey instance.
+func (c *Config) GetPrivateKey() *rsa.PrivateKey {
+	return c.privateKey
+}
+
+// Close to be used in graceful server shutdown
+func (c *Config) Close() error {
+	l := logger.Get()
+
+	db, _ := c.db.DB()
+	if err := db.Close(); err != nil {
+		l.Error("Error closing DB connection", zap.Error(err))
+		return err
+	}
+
+	if err := c.redisClient.Close(); err != nil {
+		l.Error("Error closing Redis connection", zap.Error(err))
+		return err
+	}
+
+	return nil
 }

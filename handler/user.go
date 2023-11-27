@@ -13,12 +13,14 @@ import (
 // User struct holds required services for handler to function
 type User struct {
 	userService domain.UserService
+	authService domain.AuthService
 }
 
 // UserHandlerConfig will hold services that will eventually be injected into this
 // handler layer
 type UserHandlerConfig struct {
 	UserService domain.UserService
+	AuthService domain.AuthService
 }
 
 // NewUser is a factory function for initializing a User Handler
@@ -28,6 +30,10 @@ func NewUser(c *UserHandlerConfig) *User {
 
 	if c.UserService != nil {
 		u.userService = c.UserService
+	}
+
+	if c.AuthService != nil {
+		u.authService = c.AuthService
 	}
 
 	return u
@@ -118,11 +124,27 @@ func (u *User) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
+	// create token pair as strings
+	authToken, err := u.authService.NewPairFromUser(ctx, user, "")
+	if err != nil {
+		l.Info("Unable to create token pair for user",
+			zap.Error(err),
+		)
+
+		// may eventually implement rollback logic here
+		// meaning, if we fail to create tokens after creating a user,
+		// we make sure to clear/delete the created user in the database
+
+		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
+			HTTPStatusCode: apperrors.Status(err),
+			ResponseData:   err,
+		})
+	}
+
 	return c.Status(fiber.StatusOK).JSON(response.CustomResponse{
 		HTTPStatusCode: fiber.StatusOK,
 		ResponseData: fiber.Map{
-			"email": user.Email,
-			"name":  user.Name,
+			"tokens": authToken,
 		},
 	})
 

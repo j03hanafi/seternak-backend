@@ -15,7 +15,7 @@ import (
 
 // New initializes and returns a new Fiber application with configured middleware.
 // Returns a pointer to the fiber.App instance.
-func New() *fiber.App {
+func New() (*fiber.App, func() error) {
 	l := logger.Get()
 	defer func(l *zap.Logger) {
 		_ = l.Sync()
@@ -26,13 +26,21 @@ func New() *fiber.App {
 	/*
 		Repository initialization
 	*/
-	userRepository := repository.NewPGUserRepository(config.GetDB())
+	userRepository := repository.NewPGUser(config.GetDB())
+	authRepository := repository.NewRedisAuth(config.GetRedis())
 
 	/*
 		Service initialization
 	*/
-	userService := service.NewUserService(&service.UserServiceConfig{
+	userService := service.NewUser(&service.UserServiceConfig{
 		UserRepository: userRepository,
+	})
+	authService := service.NewAuth(&service.AuthServiceConfig{
+		AuthRepository:             authRepository,
+		PrivateKey:                 config.GetPrivateKey(),
+		RefreshTokenSecret:         viper.GetString("REFRESH_TOKEN_SECRET"),
+		IDTokenExpirationSecs:      viper.GetInt64("ID_TOKEN_EXP"),
+		RefreshTokenExpirationSecs: viper.GetInt64("REFRESH_TOKEN_EXP"),
 	})
 
 	// Fiber instance
@@ -40,15 +48,18 @@ func New() *fiber.App {
 	app.Use(fiberzap.New(*config.GetFiberzapConfig()))
 	app.Use(recover.New(*config.GetRecoverConfig()))
 
-	// API initialization
+	/*
+		API initialization
+	*/
 	newAPI(&apiConfig{
 		app:     app,
 		baseURL: viper.GetString("API_URL"),
 		version: handler.NewVersion(),
 		user: handler.NewUser(&handler.UserHandlerConfig{
 			UserService: userService,
+			AuthService: authService,
 		}),
 	})
 
-	return app
+	return app, config.Close
 }

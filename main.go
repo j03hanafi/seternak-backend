@@ -25,7 +25,7 @@ func main() {
 	defer stop()
 
 	// Initialize Fiber app
-	app := router.New()
+	app, closeCallback := router.New()
 	go func() {
 		if err = app.Listen(":8080"); err != nil {
 			log.Fatal("Server Error", err)
@@ -41,6 +41,10 @@ func main() {
 	err = app.ShutdownWithTimeout(5 * time.Second)
 	if err != nil {
 		l.Fatal("Server forced to shutdown", zap.Error(err))
+	}
+
+	if err = closeCallback(); err != nil {
+		l.Fatal("Error closing Fiber app", zap.Error(err))
 	}
 	l.Info("Server was successful shutdown.")
 }

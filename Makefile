@@ -19,6 +19,11 @@ migrate-down:
 migrate-force:
 	migrate -database postgres://postgres:password@localhost:$(PORT)/seternak?sslmode=disable -path $(PWD)/migrations force $(VERSION)
 
+create-keypair:
+	@echo "Creating an rsa 256 key pair"
+	openssl genpkey -algorithm RSA -out $(PWD)/rsa_private.pem -pkeyopt rsa_keygen_bits:2048
+	openssl rsa -in $(PWD)/rsa_private.pem -pubout -out $(PWD)/rsa_public.pem
+
 # create dev and test keys
 # run postgres containers in docker-compose
 # migrate down

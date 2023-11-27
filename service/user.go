@@ -12,7 +12,7 @@ import (
 // userService acts as a struct for injecting an implementation of repositories
 // for use in service methods
 type userService struct {
-	UserRepository domain.UserRepository
+	userRepository domain.UserRepository
 }
 
 // UserServiceConfig will hold repositories that will eventually be injected into this
@@ -21,13 +21,13 @@ type UserServiceConfig struct {
 	UserRepository domain.UserRepository
 }
 
-// NewUserService is a factory function for
+// NewUser is a factory function for
 // initializing a userService with its repository layer dependencies
-func NewUserService(c *UserServiceConfig) domain.UserService {
+func NewUser(c *UserServiceConfig) domain.UserService {
 	service := new(userService)
 
 	if c.UserRepository != nil {
-		service.UserRepository = c.UserRepository
+		service.userRepository = c.UserRepository
 	}
 
 	return service
@@ -48,7 +48,7 @@ func (u *userService) SignUp(ctx context.Context, user *domain.User) error {
 
 	user.Password = pw
 
-	if err := u.UserRepository.Create(ctx, user); err != nil {
+	if err := u.userRepository.Create(ctx, user); err != nil {
 		return err
 	}
 
@@ -58,13 +58,28 @@ func (u *userService) SignUp(ctx context.Context, user *domain.User) error {
 func (u *userService) SignIn(ctx context.Context, user *domain.User) error {
 	l := logger.FromCtx(ctx)
 
-	userFetch, err := u.UserRepository.FindByEmail(ctx, user.Email)
+	userFetch, err := u.userRepository.FindByEmail(ctx, user.Email)
 	if err != nil {
 		l.Error("error fetching user",
 			zap.Error(err),
 			zap.Any("user", user),
 		)
 		return apperrors.NewAuthorization(err, err.Error())
+	}
+
+	match, err := utils.ComparePasswords(userFetch.Password, user.Password)
+	if err != nil {
+		l.Error("error comparing passwords",
+			zap.Error(err),
+		)
+		return apperrors.NewInternal(err)
+	}
+
+	if !match {
+		l.Error("passwords do not match",
+			zap.Error(err),
+		)
+		return apperrors.NewAuthorization(nil, "Invalid email/password combination")
 	}
 
 	*user = *userFetch

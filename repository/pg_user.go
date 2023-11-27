@@ -17,8 +17,8 @@ type pgUserRepository struct {
 	db *gorm.DB
 }
 
-// NewPGUserRepository is a factory for initializing domain.UserRepository
-func NewPGUserRepository(db *gorm.DB) domain.UserRepository {
+// NewPGUser is a factory for initializing domain.UserRepository
+func NewPGUser(db *gorm.DB) domain.UserRepository {
 	return &pgUserRepository{
 		db: db,
 	}

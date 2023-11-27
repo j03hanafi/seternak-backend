@@ -60,6 +60,6 @@ func initPGUser(t testing.TB) domain.UserRepository {
 	viper.Set("PG_HOST", "localhost")
 	cfg := config.New()
 
-	return NewPGUserRepository(cfg.GetDB())
+	return NewPGUser(cfg.GetDB())
 
 }
