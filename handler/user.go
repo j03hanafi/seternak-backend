@@ -2,7 +2,6 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/handler/request"
@@ -44,8 +43,7 @@ func NewUser(c *UserHandlerConfig) *User {
 // SignUp handler
 func (u *User) SignUp(c *fiber.Ctx) error {
 	ctx := c.UserContext()
-	l := logger.Get()
-	ctx = logger.WithCtx(ctx, l)
+	l := logger.FromCtx(ctx)
 
 	// bind request body to SignUp struct
 	req := new(request.SignUp)
@@ -89,8 +87,7 @@ func (u *User) SignUp(c *fiber.Ctx) error {
 
 func (u *User) SignIn(c *fiber.Ctx) error {
 	ctx := c.UserContext()
-	l := logger.Get()
-	ctx = logger.WithCtx(ctx, l)
+	l := logger.FromCtx(ctx)
 
 	// bind request body to SignIn struct
 	req := new(request.SignIn)
@@ -154,15 +151,12 @@ func (u *User) SignIn(c *fiber.Ctx) error {
 
 func (u *User) SignOut(c *fiber.Ctx) error {
 	ctx := c.UserContext()
-	user := c.Locals(consts.JWTUserContextKey).(domain.User)
-	l := logger.Get()
-	ctx = logger.WithCtx(ctx, l)
+	l := logger.FromCtx(ctx)
 
-	l.Info("User", zap.Any("user", user))
+	user := c.Locals(consts.JWTUserContextKey).(domain.User)
 
 	// sign out user
-	uid, _ := uuid.NewRandom()
-	if err := u.userService.SignOut(ctx, uid); err != nil {
+	if err := u.userService.SignOut(ctx, user.UID); err != nil {
 		l.Info("Unable to sign out user",
 			zap.Error(err),
 		)

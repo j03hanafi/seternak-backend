@@ -24,3 +24,7 @@ func (v *Version) GetVersion(c *fiber.Ctx) error {
 		},
 	})
 }
+
+func (v *Version) getGitVersion() {
+
+}

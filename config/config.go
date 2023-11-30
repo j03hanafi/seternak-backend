@@ -35,6 +35,7 @@ type Config struct {
 	redisClient *redis.Client
 	privateKey  *rsa.PrivateKey
 	publicKey   *rsa.PublicKey
+	zapLogger   *zap.Logger
 }
 
 // New initializes a new Config struct, sets default values, and loads environment variables.
@@ -60,6 +61,7 @@ func New() *Config {
 	}
 
 	// Set Config struct field values
+	config.setLogger()
 	config.setDB()
 	config.setFiberConfig()
 	config.setFiberzapConfig()
@@ -97,6 +99,17 @@ func (c *Config) setDefaults() {
 
 }
 
+// setLogger initializes from logger utils package.
+func (c *Config) setLogger() {
+	c.zapLogger = logger.Get()
+}
+
+// GetLogger retrieves the zap logger instance from the Config struct.
+// Returns a pointer to the zap.Logger instance.
+func (c *Config) GetLogger() *zap.Logger {
+	return c.zapLogger
+}
+
 // setFiberConfig initializes Fiber's configuration with custom settings.
 // Updates the Config struct fiber field with the new settings.
 func (c *Config) setFiberConfig() {
@@ -120,7 +133,7 @@ func (c *Config) GetFiberConfig() *fiber.Config {
 // Updates the Config struct fiberzap field with the new settings.
 func (c *Config) setFiberzapConfig() {
 	c.fiberzap = &fiberzap.Config{
-		Logger: logger.Get(),
+		Logger: c.zapLogger,
 		Fields: []string{"pid", "status", "method", "path", "queryParams", "ip", "ua", "latency", "time", "resBody", "error"},
 	}
 }
@@ -173,7 +186,7 @@ func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 // It logs a fatal error and exits if the database initialization fails.
 func (c *Config) setDB() {
 	var (
-		l      = logger.Get()
+		l      = c.zapLogger
 		pgHost = viper.GetString("PG_HOST")
 		pgPort = viper.GetString("PG_PORT")
 		pgUser = viper.GetString("PG_USER")
@@ -225,7 +238,7 @@ func (c *Config) GetDB() *gorm.DB {
 // It logs a fatal error and exits if the Redis initialization fails.
 func (c *Config) setRedis() {
 	var (
-		l         = logger.Get()
+		l         = c.zapLogger
 		redisHost = viper.GetString("REDIS_HOST")
 		redisPort = viper.GetString("REDIS_PORT")
 	)
@@ -254,7 +267,7 @@ func (c *Config) GetRedis() *redis.Client {
 // setRSAKeys initializes and sets the RSA keys for JWT signing and verification.
 // It logs a fatal error and exits if the RSA key initialization fails.
 func (c *Config) setRSAKeys() {
-	l := logger.Get()
+	l := c.zapLogger
 
 	privateKeyFile, err := os.ReadFile(viper.GetString("PRIVATE_KEY_FILE"))
 	if err != nil {
@@ -295,7 +308,7 @@ func (c *Config) GetPublicKey() *rsa.PublicKey {
 
 // Close to be used in graceful server shutdown
 func (c *Config) Close() error {
-	l := logger.Get()
+	l := c.zapLogger
 
 	db, _ := c.db.DB()
 	if err := db.Close(); err != nil {

@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/j03hanafi/seternak-backend/handler"
 	"github.com/j03hanafi/seternak-backend/handler/middleware"
+	"go.uber.org/zap"
 )
 
 // api struct holds required handlers for api to function
@@ -18,6 +19,7 @@ type api struct {
 type apiConfig struct {
 	app       *fiber.App
 	baseURL   string
+	zapLogger *zap.Logger
 	version   *handler.Version
 	user      *handler.User
 	publicKey *rsa.PublicKey
@@ -31,12 +33,12 @@ func newAPI(c *apiConfig) {
 	}
 
 	// Create a group, or base url for all routes
-	g := c.app.Group(c.baseURL)
+	g := c.app.Group(c.baseURL).Use(middleware.Logger(c.zapLogger))
 
 	g.Get("", h.versionHandler.GetVersion)
 
 	g.Post("/signup", h.userHandler.SignUp)
-	g.Post("/signin", h.userHandler.SignIn)
+	g.Post("/login", h.userHandler.SignIn)
 
 	auth := g.Use(middleware.AuthUser(c.publicKey))
 	auth.Post("/logout", h.userHandler.SignOut)

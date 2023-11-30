@@ -72,7 +72,7 @@ func Get() *zap.Logger {
 
 		if viper.GetString("APP_ENV") != consts.ProductionMode {
 			level = zap.NewAtomicLevelAt(zap.DebugLevel)
-			opts = append(opts, zap.Development(), zap.AddCaller(), zap.AddStacktrace(zap.WarnLevel))
+			opts = append(opts, zap.Development(), zap.AddCaller(), zap.AddStacktrace(zap.DPanicLevel))
 			core = zapcore.NewCore(consoleEncoder, stdout, level)
 		} else {
 			core = zapcore.NewTee(

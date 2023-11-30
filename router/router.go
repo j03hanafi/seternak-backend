@@ -8,19 +8,12 @@ import (
 	"github.com/j03hanafi/seternak-backend/handler"
 	"github.com/j03hanafi/seternak-backend/repository"
 	"github.com/j03hanafi/seternak-backend/service"
-	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 // New initializes and returns a new Fiber application with configured middleware.
 // Returns a pointer to the fiber.App instance.
 func New() (*fiber.App, func() error) {
-	l := logger.Get()
-	defer func(l *zap.Logger) {
-		_ = l.Sync()
-	}(l)
-
 	config := configuration.New()
 
 	/*
@@ -34,6 +27,7 @@ func New() (*fiber.App, func() error) {
 	*/
 	userService := service.NewUser(&service.UserServiceConfig{
 		UserRepository: userRepository,
+		AuthRepository: authRepository,
 	})
 	authService := service.NewAuth(&service.AuthServiceConfig{
 		AuthRepository:             authRepository,
@@ -60,6 +54,7 @@ func New() (*fiber.App, func() error) {
 			AuthService: authService,
 		}),
 		publicKey: config.GetPublicKey(),
+		zapLogger: config.GetLogger(),
 	})
 
 	return app, config.Close
