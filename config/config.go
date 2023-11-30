@@ -34,6 +34,7 @@ type Config struct {
 	recover     *recover.Config
 	redisClient *redis.Client
 	privateKey  *rsa.PrivateKey
+	publicKey   *rsa.PublicKey
 }
 
 // New initializes a new Config struct, sets default values, and loads environment variables.
@@ -90,6 +91,7 @@ func (c *Config) setDefaults() {
 	// Set default Auth configuration
 	viper.SetDefault("REFRESH_TOKEN_SECRET", "refresh_token_secret")
 	viper.SetDefault("PRIVATE_KEY_FILE", "./rsa_private.pem")
+	viper.SetDefault("PUBLIC_KEY_FILE", "./rsa_public.pem")
 	viper.SetDefault("ID_TOKEN_EXP", "900")         // 15 minutes
 	viper.SetDefault("REFRESH_TOKEN_EXP", "259200") // 3 days
 
@@ -257,7 +259,6 @@ func (c *Config) setRSAKeys() {
 	privateKeyFile, err := os.ReadFile(viper.GetString("PRIVATE_KEY_FILE"))
 	if err != nil {
 		l.Fatal("Error reading private key file", zap.Error(err))
-		return
 	}
 
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyFile)
@@ -266,12 +267,30 @@ func (c *Config) setRSAKeys() {
 	}
 
 	c.privateKey = privateKey
+
+	publicKeyFile, err := os.ReadFile(viper.GetString("PUBLIC_KEY_FILE"))
+	if err != nil {
+		l.Fatal("Error reading public key file", zap.Error(err))
+	}
+
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyFile)
+	if err != nil {
+		l.Fatal("Error parsing public key", zap.Error(err))
+	}
+
+	c.publicKey = publicKey
 }
 
 // GetPrivateKey retrieves the RSA private key from the Config struct.
 // Returns a pointer to the rsa.PrivateKey instance.
 func (c *Config) GetPrivateKey() *rsa.PrivateKey {
 	return c.privateKey
+}
+
+// GetPublicKey retrieves the RSA public key from the Config struct.
+// Returns a pointer to the rsa.PublicKey instance.
+func (c *Config) GetPublicKey() *rsa.PublicKey {
+	return c.publicKey
 }
 
 // Close to be used in graceful server shutdown

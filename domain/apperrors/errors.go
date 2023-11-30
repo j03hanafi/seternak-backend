@@ -17,6 +17,7 @@ const (
 	Conflict      Type = "E001" // Already exists (eg, create account with existent email) - 409
 	NotFound      Type = "E002" // For not finding resource
 	Authorization Type = "E003" // Authentication Failures
+	BadRequest    Type = "E004" // Validation errors / BadInput
 )
 
 // Error is the standard error interface
@@ -50,6 +51,8 @@ func (e Error) Status() int {
 		return http.StatusNotFound
 	case Authorization:
 		return http.StatusUnauthorized
+	case BadRequest:
+		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
 	}
@@ -109,6 +112,18 @@ func NewAuthorization(err error, reason ...string) *Error {
 	}
 	return newError(&Error{
 		Type:    Authorization,
+		Message: message,
+		Data:    err,
+	})
+}
+
+func NewBadRequest(err error, reason ...string) *Error {
+	message := "Bad request"
+	if len(reason) > 0 {
+		message = fmt.Sprintf("Bad request. Reason: %v", reason[0])
+	}
+	return newError(&Error{
+		Type:    BadRequest,
 		Message: message,
 		Data:    err,
 	})

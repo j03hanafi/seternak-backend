@@ -2,10 +2,12 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/handler/request"
 	"github.com/j03hanafi/seternak-backend/handler/response"
+	"github.com/j03hanafi/seternak-backend/utils/consts"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"go.uber.org/zap"
 )
@@ -146,6 +148,33 @@ func (u *User) SignIn(c *fiber.Ctx) error {
 		ResponseData: fiber.Map{
 			"tokens": authToken,
 		},
+	})
+
+}
+
+func (u *User) SignOut(c *fiber.Ctx) error {
+	ctx := c.UserContext()
+	user := c.Locals(consts.JWTUserContextKey).(domain.User)
+	l := logger.Get()
+	ctx = logger.WithCtx(ctx, l)
+
+	l.Info("User", zap.Any("user", user))
+
+	// sign out user
+	uid, _ := uuid.NewRandom()
+	if err := u.userService.SignOut(ctx, uid); err != nil {
+		l.Info("Unable to sign out user",
+			zap.Error(err),
+		)
+		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
+			HTTPStatusCode: apperrors.Status(err),
+			ResponseData:   err,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.CustomResponse{
+		HTTPStatusCode: fiber.StatusOK,
+		ResponseData:   "Successfully signed out",
 	})
 
 }

@@ -46,4 +46,8 @@ type AuthRepository interface {
 	// DeleteRefreshToken removes a user's refresh token from the data source.
 	// Returns an error if the deletion process fails.
 	DeleteRefreshToken(ctx context.Context, userID, prevTokenID string) error
+
+	// DeleteUserRefreshTokens removes all refresh tokens associated with a specific user.
+	// Returns an error if the deletion operation fails.
+	DeleteUserRefreshTokens(ctx context.Context, userID string) error
 }

@@ -59,6 +59,7 @@ func New() (*fiber.App, func() error) {
 			UserService: userService,
 			AuthService: authService,
 		}),
+		publicKey: config.GetPublicKey(),
 	})
 
 	return app, config.Close

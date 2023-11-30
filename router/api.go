@@ -1,8 +1,10 @@
 package router
 
 import (
+	"crypto/rsa"
 	"github.com/gofiber/fiber/v2"
 	"github.com/j03hanafi/seternak-backend/handler"
+	"github.com/j03hanafi/seternak-backend/handler/middleware"
 )
 
 // api struct holds required handlers for api to function
@@ -14,10 +16,11 @@ type api struct {
 // apiConfig will hold handlers that will eventually be injected into this
 // api layer on api initialization
 type apiConfig struct {
-	app     *fiber.App
-	baseURL string
-	version *handler.Version
-	user    *handler.User
+	app       *fiber.App
+	baseURL   string
+	version   *handler.Version
+	user      *handler.User
+	publicKey *rsa.PublicKey
 }
 
 // newAPI initializes the api with required injected handlers along with http routes
@@ -34,4 +37,7 @@ func newAPI(c *apiConfig) {
 
 	g.Post("/signup", h.userHandler.SignUp)
 	g.Post("/signin", h.userHandler.SignIn)
+
+	auth := g.Use(middleware.AuthUser(c.publicKey))
+	auth.Post("/logout", h.userHandler.SignOut)
 }

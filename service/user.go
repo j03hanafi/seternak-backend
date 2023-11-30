@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils"
@@ -13,12 +14,14 @@ import (
 // for use in service methods
 type userService struct {
 	userRepository domain.UserRepository
+	authRepository domain.AuthRepository
 }
 
 // UserServiceConfig will hold repositories that will eventually be injected into this
 // service layer
 type UserServiceConfig struct {
 	UserRepository domain.UserRepository
+	AuthRepository domain.AuthRepository
 }
 
 // NewUser is a factory function for
@@ -28,6 +31,10 @@ func NewUser(c *UserServiceConfig) domain.UserService {
 
 	if c.UserRepository != nil {
 		service.userRepository = c.UserRepository
+	}
+
+	if c.AuthRepository != nil {
+		service.authRepository = c.AuthRepository
 	}
 
 	return service
@@ -55,6 +62,8 @@ func (u *userService) SignUp(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
+// SignIn verifies user credentials and updates the user object if successful.
+// Returns an authorization error for invalid credentials or an internal error for other failures.
 func (u *userService) SignIn(ctx context.Context, user *domain.User) error {
 	l := logger.FromCtx(ctx)
 
@@ -86,4 +95,10 @@ func (u *userService) SignIn(ctx context.Context, user *domain.User) error {
 
 	return nil
 
+}
+
+// SignOut removes all refresh tokens associated with the given user's UUID.
+// Returns an error if the process of deleting refresh tokens encounters any issues.
+func (u *userService) SignOut(ctx context.Context, uid uuid.UUID) error {
+	return u.authRepository.DeleteUserRefreshTokens(ctx, uid.String())
 }

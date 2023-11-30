@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
@@ -68,6 +69,39 @@ func (r *redisAuthRepository) DeleteRefreshToken(ctx context.Context, userID, pr
 			zap.String("prevTokenID", prevTokenID),
 		)
 		return apperrors.NewAuthorization(result.Err(), "Invalid refresh token")
+	}
+
+	return nil
+}
+
+func (r *redisAuthRepository) DeleteUserRefreshTokens(ctx context.Context, userID string) error {
+	l := logger.FromCtx(ctx)
+
+	pattenr := fmt.Sprintf("%s*", userID)
+
+	iter := r.redis.Scan(ctx, 0, pattenr, 5).Iterator()
+	failCount := 0
+
+	for iter.Next(ctx) {
+		if err := r.redis.Del(ctx, iter.Val()).Err(); err != nil {
+			l.Error("Failed to delete refresh token",
+				zap.String("tokenID", iter.Val()),
+				zap.Error(err),
+			)
+			failCount++
+		}
+	}
+
+	// checks for any errors that might have occurred during iteration
+	if err := iter.Err(); err != nil {
+		l.Error("Failed to delete refresh token",
+			zap.String("tokenID", iter.Val()),
+			zap.Error(err),
+		)
+	}
+
+	if failCount > 0 {
+		return apperrors.NewInternal(errors.New("failed to delete refresh token"))
 	}
 
 	return nil
