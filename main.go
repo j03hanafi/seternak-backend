@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/j03hanafi/seternak-backend/router"
+	"github.com/j03hanafi/seternak-backend/server"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
 	"go.uber.org/zap"
 	"log"
@@ -25,7 +25,7 @@ func main() {
 	defer stop()
 
 	// Initialize Fiber app
-	app, closeCallback := router.New()
+	app, closeCallback := server.New()
 	go func() {
 		if err = app.Listen(":8080"); err != nil {
 			log.Fatal("Server Error", err)

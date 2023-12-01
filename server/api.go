@@ -1,10 +1,10 @@
-package router
+package server
 
 import (
 	"crypto/rsa"
 	"github.com/gofiber/fiber/v2"
 	"github.com/j03hanafi/seternak-backend/handler"
-	"github.com/j03hanafi/seternak-backend/handler/middleware"
+	"github.com/j03hanafi/seternak-backend/server/middleware"
 	"go.uber.org/zap"
 )
 
@@ -32,8 +32,8 @@ func newAPI(c *apiConfig) {
 		userHandler:    c.user,
 	}
 
-	// Create a group, or base url for all routes
-	g := c.app.Group(c.baseURL).Use(middleware.Logger(c.zapLogger))
+	// Create a group, or base url for all routes and middleware that will be used for all API
+	g := c.app.Group(c.baseURL).Use(middleware.Logger(c.zapLogger), middleware.Compression())
 
 	g.Get("", h.versionHandler.GetVersion)
 
