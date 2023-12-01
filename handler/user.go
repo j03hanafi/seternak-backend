@@ -172,3 +172,46 @@ func (u *User) SignOut(c *fiber.Ctx) error {
 	})
 
 }
+
+func (u *User) Tokens(c *fiber.Ctx) error {
+	ctx := c.UserContext()
+	l := logger.FromCtx(ctx)
+
+	refreshToken := c.Locals(consts.JWTRefreshTokenContextKey).(*domain.RefreshToken)
+
+	// get up-to-date user data
+	user, err := u.userService.Get(ctx, refreshToken.UID)
+	if err != nil {
+		l.Error("Unable to get user",
+			zap.Error(err),
+		)
+		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
+			HTTPStatusCode: apperrors.Status(err),
+			ResponseData:   err,
+		})
+	}
+
+	// create token pair as strings
+	authToken, err := u.authService.NewPairFromUser(ctx, user, refreshToken.ID.String())
+	if err != nil {
+		l.Info("Unable to create token pair for user",
+			zap.Error(err),
+		)
+
+		// may eventually implement rollback logic here
+		// meaning, if we fail to create tokens after creating a user,
+		// we make sure to clear/delete the created user in the database
+
+		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
+			HTTPStatusCode: apperrors.Status(err),
+			ResponseData:   err,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.CustomResponse{
+		HTTPStatusCode: fiber.StatusOK,
+		ResponseData: fiber.Map{
+			"tokens": authToken,
+		},
+	})
+}

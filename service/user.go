@@ -102,3 +102,7 @@ func (u *userService) SignIn(ctx context.Context, user *domain.User) error {
 func (u *userService) SignOut(ctx context.Context, uid uuid.UUID) error {
 	return u.authRepository.DeleteUserRefreshTokens(ctx, uid.String())
 }
+
+func (u *userService) Get(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+	return u.userRepository.FindByID(ctx, uid)
+}

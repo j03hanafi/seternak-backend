@@ -55,6 +55,7 @@ func New() (*fiber.App, func() error) {
 		}),
 		publicKey: config.GetPublicKey(),
 		zapLogger: config.GetLogger(),
+		secretKey: viper.GetString("REFRESH_TOKEN_SECRET"),
 	})
 
 	return app, config.Close

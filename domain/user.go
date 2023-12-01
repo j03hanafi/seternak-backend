@@ -28,6 +28,10 @@ type UserService interface {
 	// SignOut handles the user sign-out process.
 	// Returns an error if the sign-out process encounters any issues.
 	SignOut(ctx context.Context, uid uuid.UUID) error
+
+	// Get retrieves a user's details from the database using their UUID.
+	// Returns a User object or an error if the user retrieval process fails.
+	Get(ctx context.Context, uid uuid.UUID) (*User, error)
 }
 
 // UserRepository defines methods the service layer expects
@@ -41,4 +45,8 @@ type UserRepository interface {
 	// FindByEmail retrieves a user by their email address from the database.
 	// Returns a User object or an error if the user is not found.
 	FindByEmail(ctx context.Context, email string) (*User, error)
+
+	// FindByID retrieves a user from the database using their unique identifier (UUID).
+	// Returns a User object or an error if the user is not found.
+	FindByID(ctx context.Context, uid uuid.UUID) (*User, error)
 }

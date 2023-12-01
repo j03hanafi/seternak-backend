@@ -23,6 +23,7 @@ type apiConfig struct {
 	version   *handler.Version
 	user      *handler.User
 	publicKey *rsa.PublicKey
+	secretKey string
 }
 
 // newAPI initializes the api with required injected handlers along with http routes
@@ -40,6 +41,7 @@ func newAPI(c *apiConfig) {
 	g.Post("/signup", h.userHandler.SignUp)
 	g.Post("/login", h.userHandler.SignIn)
 
-	auth := g.Use(middleware.AuthUser(c.publicKey))
-	auth.Post("/logout", h.userHandler.SignOut)
+	g.Post("/tokens", middleware.AuthRefresh(c.secretKey), h.userHandler.Tokens)
+
+	g.Post("/logout", middleware.AuthToken(c.publicKey), h.userHandler.SignOut)
 }

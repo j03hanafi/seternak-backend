@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/repository/model"
@@ -65,4 +66,24 @@ func (p *pgUserRepository) FindByEmail(ctx context.Context, email string) (*doma
 
 	return user.ToUser(), nil
 
+}
+
+// FindByID searches for a user in the database using their UUID and converts the result to a domain.User.
+// Returns a domain.User object or an error if the user is not found or if there's an internal error.
+func (p *pgUserRepository) FindByID(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+	l := logger.FromCtx(ctx)
+
+	user := new(model.User)
+
+	err := p.db.WithContext(ctx).Where("uid = ?", uid).First(user).Error
+	if err != nil {
+		l.Error("Could not find a user", zap.Error(err), zap.String("uid", uid.String()))
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperrors.NewNotFound(err, map[string]any{"uid": uid})
+		}
+
+		return nil, apperrors.NewInternal(err)
+	}
+
+	return user.ToUser(), nil
 }

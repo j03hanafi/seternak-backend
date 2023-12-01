@@ -11,6 +11,22 @@ type MockUserService struct {
 	mock.Mock
 }
 
+func (m *MockUserService) Get(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+	args := m.Called(ctx, uid)
+
+	var r0 *domain.User
+	if args.Get(0) != nil {
+		r0 = args.Get(0).(*domain.User)
+	}
+
+	var r1 error
+	if args.Get(1) != nil {
+		r1 = args.Error(1)
+	}
+
+	return r0, r1
+}
+
 func (m *MockUserService) SignOut(ctx context.Context, uid uuid.UUID) error {
 	args := m.Called(ctx, uid)
 
