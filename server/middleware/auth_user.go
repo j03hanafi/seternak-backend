@@ -5,11 +5,11 @@ import (
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils"
 	"github.com/j03hanafi/seternak-backend/utils/consts"
+	"github.com/oklog/ulid/v2"
 )
 
 /*
@@ -71,8 +71,8 @@ func AuthRefreshSuccessHandler() fiber.Handler {
 		claims := c.Locals(consts.JWTContextKey).(*jwt.Token).Claims.(*utils.RefreshTokenCustomClaims)
 
 		// Registered claims store ID as a string
-		// parse claims.ID as a uuid
-		tokenID, err := uuid.Parse(claims.ID)
+		// parse claims.ID as a unique identifier
+		tokenID, err := ulid.Parse(claims.ID)
 		if err != nil {
 			authErr := apperrors.NewBadRequest(err, consts.ErrBadRequestJWT)
 			return authErr

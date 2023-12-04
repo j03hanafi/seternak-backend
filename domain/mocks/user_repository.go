@@ -2,8 +2,8 @@ package mocks
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
+	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -11,7 +11,7 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) FindByID(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+func (m *MockUserRepository) FindByID(ctx context.Context, uid ulid.ULID) (*domain.User, error) {
 	args := m.Called(ctx, uid)
 
 	var r0 *domain.User

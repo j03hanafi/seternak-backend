@@ -7,6 +7,7 @@ import (
 	configuration "github.com/j03hanafi/seternak-backend/config"
 	"github.com/j03hanafi/seternak-backend/handler"
 	"github.com/j03hanafi/seternak-backend/repository"
+	"github.com/j03hanafi/seternak-backend/server/middleware"
 	"github.com/j03hanafi/seternak-backend/service"
 	"github.com/spf13/viper"
 )
@@ -41,6 +42,7 @@ func New() (*fiber.App, func() error) {
 	app := fiber.New(*config.GetFiberConfig())
 	app.Use(fiberzap.New(*config.GetFiberzapConfig()))
 	app.Use(recover.New(*config.GetRecoverConfig()))
+	app.Use(middleware.Logger(config.GetLogger()), middleware.Compression(), middleware.RequestID())
 
 	/*
 		API initialization
@@ -54,7 +56,6 @@ func New() (*fiber.App, func() error) {
 			AuthService: authService,
 		}),
 		publicKey: config.GetPublicKey(),
-		zapLogger: config.GetLogger(),
 		secretKey: viper.GetString("REFRESH_TOKEN_SECRET"),
 	})
 

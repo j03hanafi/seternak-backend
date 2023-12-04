@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 	"time"
 )
 
@@ -15,8 +15,8 @@ type AuthToken struct {
 // RefreshToken stores token properties that
 // are accessed in multiple application layer
 type RefreshToken struct {
-	ID  uuid.UUID `json:"-"`
-	UID uuid.UUID `json:"-"`
+	ID  ulid.ULID `json:"-"`
+	UID ulid.ULID `json:"-"`
 	SS  string    `json:"refresh_token"`
 }
 

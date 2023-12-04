@@ -134,7 +134,7 @@ func (c *Config) GetFiberConfig() *fiber.Config {
 func (c *Config) setFiberzapConfig() {
 	c.fiberzap = &fiberzap.Config{
 		Logger: c.zapLogger,
-		Fields: []string{"latency", "time", "pid", "status", "method", "path", "queryParams", "ip", "ua", "resBody", "error"},
+		Fields: []string{"latency", "time", "requestId", "pid", "status", "method", "path", "queryParams", "ip", "ua", "resBody", "error"},
 	}
 }
 

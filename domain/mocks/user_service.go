@@ -2,8 +2,8 @@ package mocks
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
+	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -11,7 +11,7 @@ type MockUserService struct {
 	mock.Mock
 }
 
-func (m *MockUserService) Get(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+func (m *MockUserService) Get(ctx context.Context, uid ulid.ULID) (*domain.User, error) {
 	args := m.Called(ctx, uid)
 
 	var r0 *domain.User
@@ -27,7 +27,7 @@ func (m *MockUserService) Get(ctx context.Context, uid uuid.UUID) (*domain.User,
 	return r0, r1
 }
 
-func (m *MockUserService) LogOut(ctx context.Context, uid uuid.UUID) error {
+func (m *MockUserService) LogOut(ctx context.Context, uid ulid.ULID) error {
 	args := m.Called(ctx, uid)
 
 	var r0 error

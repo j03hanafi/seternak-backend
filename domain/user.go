@@ -2,12 +2,12 @@ package domain
 
 import (
 	"context"
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 // User defines domain model and its json representation
 type User struct {
-	UID      uuid.UUID `json:"uid"`
+	UID      ulid.ULID `json:"uid"`
 	Email    string    `json:"email"`
 	Password string    `json:"-"`
 	Name     string    `json:"name"`
@@ -27,11 +27,11 @@ type UserService interface {
 
 	// LogOut handles the user sign-out process.
 	// Returns an error if the sign-out process encounters any issues.
-	LogOut(ctx context.Context, uid uuid.UUID) error
+	LogOut(ctx context.Context, uid ulid.ULID) error
 
-	// Get retrieves a user's details from the database using their UUID.
+	// Get retrieves a user's details from the database using their unique identifier.
 	// Returns a User object or an error if the user retrieval process fails.
-	Get(ctx context.Context, uid uuid.UUID) (*User, error)
+	Get(ctx context.Context, uid ulid.ULID) (*User, error)
 }
 
 // UserRepository defines methods the service layer expects
@@ -46,7 +46,7 @@ type UserRepository interface {
 	// Returns a User object or an error if the user is not found.
 	FindByEmail(ctx context.Context, email string) (*User, error)
 
-	// FindByID retrieves a user from the database using their unique identifier (UUID).
+	// FindByID retrieves a user from the database using their unique identifier.
 	// Returns a User object or an error if the user is not found.
-	FindByID(ctx context.Context, uid uuid.UUID) (*User, error)
+	FindByID(ctx context.Context, uid ulid.ULID) (*User, error)
 }

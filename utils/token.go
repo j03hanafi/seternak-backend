@@ -2,8 +2,9 @@ package utils
 
 import (
 	"crypto/rsa"
-	"github.com/google/uuid"
+	"github.com/j03hanafi/seternak-backend/utils/id"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
+	"github.com/oklog/ulid/v2"
 	"go.uber.org/zap"
 	"time"
 
@@ -50,7 +51,7 @@ func GenerateIDToken(u *domain.User, key *rsa.PrivateKey, exp int64) (string, er
 // We return the id, so it can be used without re-parsing the JWT from signed string
 type RefreshTokenData struct {
 	SS        string
-	ID        uuid.UUID
+	ID        ulid.ULID
 	ExpiresIn time.Duration
 }
 
@@ -58,23 +59,18 @@ type RefreshTokenData struct {
 // This can be used to extract user id for subsequent
 // application operations (IE, fetch user in Redis)
 type RefreshTokenCustomClaims struct {
-	UID uuid.UUID `json:"uid"`
+	UID ulid.ULID `json:"uid"`
 	jwt.RegisteredClaims
 }
 
 // GenerateRefreshToken creates a refresh token
 // The refresh token stores only the user's ID, a string
-func GenerateRefreshToken(uid uuid.UUID, key string, exp int64) (*RefreshTokenData, error) {
+func GenerateRefreshToken(uid ulid.ULID, key string, exp int64) (*RefreshTokenData, error) {
 	l := logger.Get()
 
 	currentTime := time.Now()
 	tokenExp := currentTime.Add(time.Duration(exp) * time.Second) // 3 days
-	tokenID, err := uuid.NewRandom()
-	if err != nil {
-		l.Error("Error generating token id",
-			zap.Error(err),
-		)
-	}
+	tokenID := id.New()
 
 	claims := RefreshTokenCustomClaims{
 		UID: uid,

@@ -2,11 +2,12 @@ package service
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
 	"github.com/j03hanafi/seternak-backend/utils"
+	"github.com/j03hanafi/seternak-backend/utils/id"
 	"github.com/j03hanafi/seternak-backend/utils/logger"
+	"github.com/oklog/ulid/v2"
 	"go.uber.org/zap"
 )
 
@@ -54,6 +55,7 @@ func (u *userService) SignUp(ctx context.Context, user *domain.User) error {
 	}
 
 	user.Password = pw
+	user.UID = id.New()
 
 	if err = u.userRepository.Create(ctx, user); err != nil {
 		return err
@@ -97,12 +99,12 @@ func (u *userService) LogIn(ctx context.Context, user *domain.User) error {
 
 }
 
-// LogOut removes all refresh tokens associated with the given user's UUID.
+// LogOut removes all refresh tokens associated with the given user's unique idenfier.
 // Returns an error if the process of deleting refresh tokens encounters any issues.
-func (u *userService) LogOut(ctx context.Context, uid uuid.UUID) error {
+func (u *userService) LogOut(ctx context.Context, uid ulid.ULID) error {
 	return u.authRepository.DeleteUserRefreshTokens(ctx, uid.String())
 }
 
-func (u *userService) Get(ctx context.Context, uid uuid.UUID) (*domain.User, error) {
+func (u *userService) Get(ctx context.Context, uid ulid.ULID) (*domain.User, error) {
 	return u.userRepository.FindByID(ctx, uid)
 }
