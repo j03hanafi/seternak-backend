@@ -51,7 +51,7 @@ func (u *User) SignUp(c *fiber.Ctx) error {
 		l.Error("error binding data",
 			zap.Error(err),
 		)
-		return apperrors.NewInternal(err)
+		return apperrors.NewBadRequest(err)
 	}
 
 	// validate request body
@@ -59,7 +59,7 @@ func (u *User) SignUp(c *fiber.Ctx) error {
 		l.Error("error validating data",
 			zap.Error(err),
 		)
-		return apperrors.NewInternal(err)
+		return apperrors.NewBadRequest(err)
 	}
 
 	// create user domain object
@@ -74,28 +74,26 @@ func (u *User) SignUp(c *fiber.Ctx) error {
 		l.Info("Unable to sign up user",
 			zap.Error(err),
 		)
-		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
-			HTTPStatusCode: apperrors.Status(err),
-			ResponseData:   err,
-		})
+		return err
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(response.CustomResponse{
 		HTTPStatusCode: fiber.StatusCreated,
+		ResponseData:   "Successfully signed up",
 	})
 }
 
-func (u *User) SignIn(c *fiber.Ctx) error {
+func (u *User) LogIn(c *fiber.Ctx) error {
 	ctx := c.UserContext()
 	l := logger.FromCtx(ctx)
 
-	// bind request body to SignIn struct
-	req := new(request.SignIn)
+	// bind request body to Log In struct
+	req := new(request.LogIn)
 	if err := c.BodyParser(req); err != nil {
 		l.Error("error binding data",
 			zap.Error(err),
 		)
-		return apperrors.NewInternal(err)
+		return apperrors.NewBadRequest(err)
 	}
 
 	// validate request body
@@ -103,7 +101,7 @@ func (u *User) SignIn(c *fiber.Ctx) error {
 		l.Error("error validating data",
 			zap.Error(err),
 		)
-		return apperrors.NewInternal(err)
+		return apperrors.NewBadRequest(err)
 	}
 
 	// create user domain object
@@ -113,14 +111,11 @@ func (u *User) SignIn(c *fiber.Ctx) error {
 	}
 
 	// sign in user
-	if err := u.userService.SignIn(ctx, user); err != nil {
+	if err := u.userService.LogIn(ctx, user); err != nil {
 		l.Info("Unable to sign in user",
 			zap.Error(err),
 		)
-		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
-			HTTPStatusCode: apperrors.Status(err),
-			ResponseData:   err,
-		})
+		return err
 	}
 
 	// create token pair as strings
@@ -134,10 +129,7 @@ func (u *User) SignIn(c *fiber.Ctx) error {
 		// meaning, if we fail to create tokens after creating a user,
 		// we make sure to clear/delete the created user in the database
 
-		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
-			HTTPStatusCode: apperrors.Status(err),
-			ResponseData:   err,
-		})
+		return err
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.CustomResponse{
@@ -153,10 +145,10 @@ func (u *User) SignOut(c *fiber.Ctx) error {
 	ctx := c.UserContext()
 	l := logger.FromCtx(ctx)
 
-	user := c.Locals(consts.JWTUserContextKey).(domain.User)
+	user := c.Locals(consts.JWTUserContextKey).(*domain.User)
 
 	// sign out user
-	if err := u.userService.SignOut(ctx, user.UID); err != nil {
+	if err := u.userService.LogOut(ctx, user.UID); err != nil {
 		l.Info("Unable to sign out user",
 			zap.Error(err),
 		)
@@ -185,10 +177,7 @@ func (u *User) Tokens(c *fiber.Ctx) error {
 		l.Error("Unable to get user",
 			zap.Error(err),
 		)
-		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
-			HTTPStatusCode: apperrors.Status(err),
-			ResponseData:   err,
-		})
+		return err
 	}
 
 	// create token pair as strings
@@ -202,10 +191,7 @@ func (u *User) Tokens(c *fiber.Ctx) error {
 		// meaning, if we fail to create tokens after creating a user,
 		// we make sure to clear/delete the created user in the database
 
-		return c.Status(apperrors.Status(err)).JSON(response.CustomResponse{
-			HTTPStatusCode: apperrors.Status(err),
-			ResponseData:   err,
-		})
+		return err
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response.CustomResponse{

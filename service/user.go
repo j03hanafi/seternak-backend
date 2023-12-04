@@ -55,16 +55,16 @@ func (u *userService) SignUp(ctx context.Context, user *domain.User) error {
 
 	user.Password = pw
 
-	if err := u.userRepository.Create(ctx, user); err != nil {
+	if err = u.userRepository.Create(ctx, user); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// SignIn verifies user credentials and updates the user object if successful.
+// LogIn verifies user credentials and updates the user object if successful.
 // Returns an authorization error for invalid credentials or an internal error for other failures.
-func (u *userService) SignIn(ctx context.Context, user *domain.User) error {
+func (u *userService) LogIn(ctx context.Context, user *domain.User) error {
 	l := logger.FromCtx(ctx)
 
 	userFetch, err := u.userRepository.FindByEmail(ctx, user.Email)
@@ -97,9 +97,9 @@ func (u *userService) SignIn(ctx context.Context, user *domain.User) error {
 
 }
 
-// SignOut removes all refresh tokens associated with the given user's UUID.
+// LogOut removes all refresh tokens associated with the given user's UUID.
 // Returns an error if the process of deleting refresh tokens encounters any issues.
-func (u *userService) SignOut(ctx context.Context, uid uuid.UUID) error {
+func (u *userService) LogOut(ctx context.Context, uid uuid.UUID) error {
 	return u.authRepository.DeleteUserRefreshTokens(ctx, uid.String())
 }
 

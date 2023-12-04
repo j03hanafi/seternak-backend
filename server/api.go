@@ -39,7 +39,7 @@ func newAPI(c *apiConfig) {
 	g.Get("", h.versionHandler.GetVersion)
 
 	g.Post("/signup", h.userHandler.SignUp)
-	g.Post("/login", h.userHandler.SignIn)
+	g.Post("/login", h.userHandler.LogIn)
 
 	g.Post("/tokens", middleware.AuthRefresh(c.secretKey), h.userHandler.Tokens)
 

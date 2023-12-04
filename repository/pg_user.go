@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
@@ -41,7 +42,7 @@ func (p *pgUserRepository) Create(ctx context.Context, u *domain.User) error {
 		// Check if the error is a duplicate email error
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return apperrors.NewConflict(err, map[string]any{"email": u.Email})
+			return apperrors.NewConflict(err, fmt.Sprintf("email: %s", u.Email))
 		}
 
 		return apperrors.NewInternal(err)
@@ -58,7 +59,7 @@ func (p *pgUserRepository) FindByEmail(ctx context.Context, email string) (*doma
 	if err != nil {
 		l.Error("Could not find a user", zap.Error(err), zap.String("email", email))
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, apperrors.NewNotFound(err, map[string]any{"email": email})
+			return nil, apperrors.NewNotFound(err, fmt.Sprintf("email: %s", email))
 		}
 
 		return nil, apperrors.NewInternal(err)
@@ -79,7 +80,7 @@ func (p *pgUserRepository) FindByID(ctx context.Context, uid uuid.UUID) (*domain
 	if err != nil {
 		l.Error("Could not find a user", zap.Error(err), zap.String("uid", uid.String()))
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, apperrors.NewNotFound(err, map[string]any{"uid": uid})
+			return nil, apperrors.NewNotFound(err, fmt.Sprintf("uid: %s", uid.String()))
 		}
 
 		return nil, apperrors.NewInternal(err)

@@ -162,16 +162,9 @@ func (c *Config) GetRecoverConfig() *recover.Config {
 // Returns a JSON response with the appropriate status code and error message.
 func (c *Config) fiberErrorHandler(ctx *fiber.Ctx, err error) error {
 
-	// Check for errors code
+	// Check for errors of type *Error
 	var appErrors *apperrors.Error
-	switch apperrors.Status(err) {
-	case fiber.StatusConflict:
-		appErrors = apperrors.NewConflict(err)
-	case fiber.StatusNotFound:
-		appErrors = apperrors.NewNotFound(err)
-	case fiber.StatusUnauthorized:
-		appErrors = apperrors.NewAuthorization(err)
-	default:
+	if !errors.As(err, &appErrors) {
 		appErrors = apperrors.NewInternal(err)
 	}
 

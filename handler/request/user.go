@@ -17,18 +17,18 @@ func (s SignUp) Validate() error {
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.Email, validation.Required, is.Email),
 		validation.Field(&s.Password, validation.Required, validation.Length(8, 255)),
-		validation.Field(&s.Name, validation.Required, validation.Length(1, 255)),
+		validation.Field(&s.Name, validation.Required, validation.Length(3, 255)),
 	)
 }
 
-// SignIn defines the request payload for SignIn method.
-type SignIn struct {
+// LogIn defines the request payload for LogIn method.
+type LogIn struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-// Validate validates the SignIn request fields.
-func (s SignIn) Validate() error {
+// Validate validates the LogIn request fields.
+func (s LogIn) Validate() error {
 	return validation.ValidateStruct(&s,
 		validation.Field(&s.Email, validation.Required, is.Email),
 		validation.Field(&s.Password, validation.Required, validation.Length(8, 255)),

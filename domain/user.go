@@ -21,13 +21,13 @@ type UserService interface {
 	// Returns an error if the user registration process fails.
 	SignUp(ctx context.Context, u *User) error
 
-	// SignIn authenticates a user based on provided credentials.
+	// LogIn authenticates a user based on provided credentials.
 	// Returns an error if authentication or any part of the sign-in process fails.
-	SignIn(ctx context.Context, u *User) error
+	LogIn(ctx context.Context, u *User) error
 
-	// SignOut handles the user sign-out process.
+	// LogOut handles the user sign-out process.
 	// Returns an error if the sign-out process encounters any issues.
-	SignOut(ctx context.Context, uid uuid.UUID) error
+	LogOut(ctx context.Context, uid uuid.UUID) error
 
 	// Get retrieves a user's details from the database using their UUID.
 	// Returns a User object or an error if the user retrieval process fails.

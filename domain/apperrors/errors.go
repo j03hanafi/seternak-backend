@@ -28,10 +28,20 @@ type Error struct {
 }
 
 // newError is a helper function to create a new Error
-func newError(e *Error) *Error {
+func newError(err error, e *Error) *Error {
+	// Check if the error is an Error type
+	var appErr *Error
+	if errors.As(err, &appErr) {
+		e.Data = appErr.Data
+	} else {
+		e.Data = err
+	}
+
+	// Check if app is in production mode
 	if viper.GetString("APP_ENV") == consts.ProductionMode {
 		e.Data = nil
 	}
+
 	return e
 }
 
@@ -73,58 +83,58 @@ func Status(err error) int {
 	Error "Factories"
 */
 
+// NewInternal returns a 500 Internal Server Error
 func NewInternal(err error) *Error {
-	return newError(&Error{
+	return newError(err, &Error{
 		Type:    Internal,
 		Message: "Internal server error",
-		Data:    err,
 	})
 }
 
-func NewConflict(err error, resource ...map[string]any) *Error {
+// NewConflict returns a 409 Conflict Error
+func NewConflict(err error, resource ...any) *Error {
 	message := "Resource already exists"
 	if len(resource) > 0 {
 		message = fmt.Sprintf("Resource: %v already exists", resource)
 	}
-	return newError(&Error{
+	return newError(err, &Error{
 		Type:    Conflict,
 		Message: message,
-		Data:    err,
 	})
 }
 
-func NewNotFound(err error, resource ...map[string]any) *Error {
+// NewNotFound returns a 404 Not Found Error
+func NewNotFound(err error, resource ...any) *Error {
 	message := "Resource not found"
 	if len(resource) > 0 {
 		message = fmt.Sprintf("Resource: %v not found", resource)
 	}
-	return newError(&Error{
+	return newError(err, &Error{
 		Type:    NotFound,
 		Message: message,
-		Data:    err,
 	})
 }
 
+// NewAuthorization returns a 401 Unauthorized Error
 func NewAuthorization(err error, reason ...string) *Error {
 	message := "Authorization failed"
 	if len(reason) > 0 {
 		message = fmt.Sprintf("Authorization failed. Reason: %v", reason[0])
 	}
-	return newError(&Error{
+	return newError(err, &Error{
 		Type:    Authorization,
 		Message: message,
-		Data:    err,
 	})
 }
 
+// NewBadRequest returns a 400 Bad Request Error
 func NewBadRequest(err error, reason ...string) *Error {
 	message := "Bad request"
 	if len(reason) > 0 {
 		message = fmt.Sprintf("Bad request. Reason: %v", reason[0])
 	}
-	return newError(&Error{
+	return newError(err, &Error{
 		Type:    BadRequest,
 		Message: message,
-		Data:    err,
 	})
 }

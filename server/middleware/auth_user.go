@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/j03hanafi/seternak-backend/domain"
 	"github.com/j03hanafi/seternak-backend/domain/apperrors"
-	"github.com/j03hanafi/seternak-backend/handler/response"
 	"github.com/j03hanafi/seternak-backend/utils"
 	"github.com/j03hanafi/seternak-backend/utils/consts"
 )
@@ -33,7 +32,7 @@ func AuthToken(publicKey *rsa.PublicKey) fiber.Handler {
 func authTokenSuccessHandler() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		claims := c.Locals(consts.JWTContextKey).(*jwt.Token).Claims.(*utils.IDTokenCustomClaims)
-		c.Locals(consts.JWTUserContextKey, *claims.User)
+		c.Locals(consts.JWTUserContextKey, claims.User)
 		return c.Next()
 	}
 }
@@ -42,16 +41,10 @@ func authTokenErrorHandler() fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		if err.Error() == consts.ErrBadRequestJWT {
 			authErr := apperrors.NewBadRequest(err, consts.ErrBadRequestJWT)
-			return c.Status(authErr.Status()).JSON(response.CustomResponse{
-				HTTPStatusCode: authErr.Status(),
-				ResponseData:   authErr,
-			})
+			return authErr
 		}
 		authErr := apperrors.NewAuthorization(err, consts.ErrUnauthorizedJWT)
-		return c.Status(authErr.Status()).JSON(response.CustomResponse{
-			HTTPStatusCode: authErr.Status(),
-			ResponseData:   authErr,
-		})
+		return authErr
 	}
 }
 
@@ -82,10 +75,7 @@ func AuthRefreshSuccessHandler() fiber.Handler {
 		tokenID, err := uuid.Parse(claims.ID)
 		if err != nil {
 			authErr := apperrors.NewBadRequest(err, consts.ErrBadRequestJWT)
-			return c.Status(authErr.Status()).JSON(response.CustomResponse{
-				HTTPStatusCode: authErr.Status(),
-				ResponseData:   authErr,
-			})
+			return authErr
 		}
 
 		c.Locals(consts.JWTRefreshTokenContextKey, &domain.RefreshToken{
@@ -101,15 +91,9 @@ func AuthRefreshErrorHandler() fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		if err.Error() == consts.ErrBadRequestJWT {
 			authErr := apperrors.NewBadRequest(err, consts.ErrBadRequestJWT)
-			return c.Status(authErr.Status()).JSON(response.CustomResponse{
-				HTTPStatusCode: authErr.Status(),
-				ResponseData:   authErr,
-			})
+			return authErr
 		}
 		authErr := apperrors.NewAuthorization(err, consts.ErrUnauthorizedJWT)
-		return c.Status(authErr.Status()).JSON(response.CustomResponse{
-			HTTPStatusCode: authErr.Status(),
-			ResponseData:   authErr,
-		})
+		return authErr
 	}
 }

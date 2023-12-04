@@ -27,7 +27,7 @@ func (m *MockUserService) Get(ctx context.Context, uid uuid.UUID) (*domain.User,
 	return r0, r1
 }
 
-func (m *MockUserService) SignOut(ctx context.Context, uid uuid.UUID) error {
+func (m *MockUserService) LogOut(ctx context.Context, uid uuid.UUID) error {
 	args := m.Called(ctx, uid)
 
 	var r0 error
@@ -49,7 +49,7 @@ func (m *MockUserService) SignUp(ctx context.Context, u *domain.User) error {
 	return r0
 }
 
-func (m *MockUserService) SignIn(ctx context.Context, u *domain.User) error {
+func (m *MockUserService) LogIn(ctx context.Context, u *domain.User) error {
 	args := m.Called(ctx, u)
 
 	var r0 error
