@@ -19,3 +19,12 @@
 
 # Go workspace file
 go.work
+
+# Jetbrains IDEs project files
+.idea/
+
+# Log files
+logs/
+
+# Keys
+*.pem
