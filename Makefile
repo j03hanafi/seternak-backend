@@ -25,13 +25,13 @@ create-keypair:
 	openssl rsa -in $(PWD)/rsa_private.pem -pubout -out $(PWD)/rsa_public.pem
 
 # create dev and test keys
-# run postgres containers in docker-compose
+# run postgres containers in docker compose
 # migrate down
 # migrate up
-# docker-compose down
+# docker compose down
 init:
-	docker-compose up -d postgres-seternak && \
+	docker compose up -d postgres-seternak && \
 	sleep 1
 	$(MAKE) migrate-down N= && \
 	$(MAKE) migrate-up N= && \
-	docker-compose down
+	docker compose down
