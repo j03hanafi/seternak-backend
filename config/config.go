@@ -120,6 +120,7 @@ func (c *Config) setFiberConfig() {
 		JSONDecoder:              json.Unmarshal,
 		ErrorHandler:             c.fiberErrorHandler,
 		StrictRouting:            true,
+		Prefork:                  true,
 	}
 }
 
